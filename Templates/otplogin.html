@@ -1,0 +1,148 @@
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.indexBackground{
+  background:  url(http://localhost:3000/static/media/indexbackground.ca51ea38d3dadf508b23.jpg);
+  background-size:  cover;
+  background-position:  center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.inputbox{
+  border: 1px solid gray;
+  height: 30px;
+  width: 100%;
+  margin-bottom: 10px;
+  border-radius: 3px;
+  padding: 5px;
+}
+.inputbox:focus{
+  outline: none;
+}
+.submitbutton{
+  height: 30px;
+  width: 100%;
+  border-radius: 3px;
+  margin-top: 5px;
+  padding: 5px;
+  outline: none;
+  background: #000000c2;
+  border:none;
+  color: white;
+  font-weight: bold;
+}
+.link{
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button{
+  cursor: pointer;
+}
+</style>
+<script src="{{ url_for('static', filename = 'assets/js/jquery.js') }}"></script>
+  <body>
+    <div id="root">
+      <div class="indexBackground">
+      <img src="{{ url_for('static', filename = 'images/logo.png') }}" alt="Logo" style="width: 100px; height: 100px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.49);">
+      <div style="background-color: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 10px; width: 300px; text-align: center;">
+        <form class="indexform">
+          <h3>Email OTP Login</h3>
+          <label id="mailfield">
+            <input type="text" id="mail" class="inputbox" placeholder="Enter Email" value="">
+          </label>
+          <label style="display: none;" id="otpfield">
+            <input type="text" id="otp" class="inputbox" placeholder="Enter OTP" value="">
+          </label>
+          <span style="text-align: center;color: red; display: none" id="errormsg"></span>
+          <button type="button" id="getotp" class="submitbutton">Get OTP</button>
+          <button type="button" id="verifyotp" class="submitbutton" style="display: none;">Verify OTP</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+          $("#getotp").click(function(){
+            var pattern = /^\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b$/i
+            var email = $("#mail").val();
+            if(email == ''){
+              $("#errormsg").html("Enter Email ID!")
+              $("#errormsg").show()
+            }else if(!pattern.test(email)){
+              $("#errormsg").html("Enter Valid Email ID!")
+              $("#errormsg").show()
+            }else{
+              $("#errormsg").hide()
+              $.ajax({
+                url:"/getotp", 
+                type: "post", 
+                dataType: 'json',
+                data: {"email":email},
+                beforeSend: function(){
+                  $("#getotp").attr("disabled","true")
+                },
+                success: function(data){
+                  if (data == 2){
+                    $("#errormsg").text("Requested mail ID not registered!")
+                    $("#errormsg").show()
+                    $("#getotp").removeAttr("disabled","true")
+                  }else{
+                    $("#errormsg").text("OTP sent to your mail ID")
+                    $("#errormsg").show()
+                    $("#errormsg").css("color","green")
+                    $("#getotp").hide()
+                    $("#verifyotp").show()
+                    $("#mailfield").hide()
+                    $("#otpfield").show()
+                  }
+                },
+                error: function() { 
+                  $("#getotp").removeAttr("disabled","true")
+                }
+              });
+            }
+          });
+          
+          $("#verifyotp").click(function(){
+              $("#errormsg").hide()
+              var otp = $("#otp").val();
+              var email = $("#mail").val();
+              if(otp == ''){
+                $("#errormsg").html("Enter the OTP")
+                $("#errormsg").show()
+              }else{
+                $.ajax({
+                url:"/verifyotp", 
+                type: "post", 
+                dataType: 'json',
+                data: {"otp":otp, "email":email},
+                beforeSend: function(){
+                  $("#verifyotp").attr("disabled","true")
+                },
+                success: function(data){
+                  if (data == 1){
+                    location.href = "{{ url_for('homepage') }}"
+                  }else{
+                    $("#verifyotp").removeAttr("disabled","true")
+                    $("#errormsg").text("Invalid OTP please try again!")
+                    $("#errormsg").css("color","red")
+                    $("#errormsg").show()
+                  }
+                }
+              });
+              }
+            
+          });
+
+        });
+    </script>
+</body>
+</html>
